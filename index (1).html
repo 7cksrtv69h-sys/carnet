@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carnet — espace de rédaction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    --bg: #F2F3FA;
+    --sidebar: #4F46E5;
+    --sidebar-icon: rgba(255,255,255,.62);
+    --sidebar-icon-active-bg: rgba(255,255,255,.18);
+    --card: #FFFFFF;
+    --border: #E6E7F1;
+    --ink: #1E2135;
+    --ink-soft: #82869B;
+    --accent: #4F46E5;
+    --accent-dark: #4038C4;
+    --accent-soft: #EEEEFC;
+    --danger: #C24A4A;
+    --success: #1E9E86;
+    --c-cv: #4F46E5;
+    --c-lettres: #DD8A2E;
+    --c-notes: #1E9E86;
+    --c-cr: #C2486B;
+    --c-mem: #7C51D1;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131420; --sidebar: #352DAE; --card: #1B1C2A; --border: #2C2E42;
+      --ink: #ECECF6; --ink-soft: #9496AC; --accent: #8B85FF; --accent-dark: #A29CFF; --accent-soft: #24234A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131420; --sidebar: #352DAE; --card: #1B1C2A; --border: #2C2E42;
+    --ink: #ECECF6; --ink-soft: #9496AC; --accent: #8B85FF; --accent-dark: #A29CFF; --accent-soft: #24234A;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .ui-head { font-family: 'Manrope', system-ui, sans-serif; }
+  .doc-serif { font-family: 'Fraunces', Georgia, serif; }
+  a { color: inherit; }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea, select { font-family: inherit; font-size: 15px; color: var(--ink); }
+
+  /* ---------- shell ---------- */
+  .shell { display: flex; min-height: 100%; }
+  .sidebar {
+    width: 62px; flex-shrink: 0; background: var(--sidebar); min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: calc(18px + env(safe-area-inset-top,0px)) 0 calc(14px + env(safe-area-inset-bottom,0px));
+    border-radius: 0 26px 26px 0; position: sticky; top: 0;
+  }
+  .side-logo { width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Fraunces',serif; font-weight:700; font-size:15px; margin-bottom: 22px; flex-shrink:0; }
+  .side-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .side-btn {
+    width: 40px; height: 40px; border-radius: 11px; border: none; background: none;
+    color: var(--sidebar-icon); display: flex; align-items: center; justify-content: center;
+  }
+  .side-btn svg { width: 19px; height: 19px; }
+  .side-btn.active { background: var(--sidebar-icon-active-bg); color: #fff; }
+  .side-btn:hover:not(.active) { color: #fff; }
+  .side-foot { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+
+  .main { flex: 1; min-width: 0; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 18px; }
+
+  /* ---------- topbar (shared) ---------- */
+  .topbar { padding: 22px 0 16px; }
+  .topbar-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+  .page-title { font-size: 21px; font-weight: 700; margin: 0; }
+  .page-sub { color: var(--ink-soft); font-size: 13px; margin-top: 3px; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 12px; min-width: 0; flex: 1; max-width: 320px;
+  }
+  .search-box svg { width: 15px; height: 15px; color: var(--ink-soft); flex-shrink: 0; }
+  .search-box input { border: none; background: none; flex: 1; min-width: 0; font-size: 13.5px; }
+  .search-box input:focus { outline: none; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--card); color: var(--ink); font-size: 13.5px; font-weight: 600;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn svg { width: 15px; height: 15px; }
+  .btn:hover { box-shadow: 0 2px 10px rgba(30,33,53,.08); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn-quiet { border-color: transparent; background: none; color: var(--ink-soft); padding: 8px 10px; }
+  .btn-quiet:hover { color: var(--ink); box-shadow: none; }
+  .btn-sm { padding: 7px 12px; font-size: 12.5px; }
+  .btn[disabled] { opacity: .45; pointer-events: none; }
+  .icon-btn {
+    width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 9px; border: 1px solid transparent; background: none; color: var(--ink-soft);
+  }
+  .icon-btn:hover { border-color: var(--border); color: var(--ink); background: var(--card); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* ---------- dashboard ---------- */
+  .greet { font-size: 24px; font-weight: 800; margin: 6px 0 2px; }
+  .greet-sub { color: var(--ink-soft); font-size: 14px; margin-bottom: 24px; }
+  .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 12px; margin-bottom: 34px; }
+  .module-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; text-align: left; }
+  .module-card:hover { box-shadow: 0 6px 20px rgba(30,33,53,.08); }
+  .module-ico { width: 38px; height: 38px; border-radius: 11px; display:flex; align-items:center; justify-content:center; margin-bottom: 14px; }
+  .module-ico svg { width: 18px; height: 18px; color: #fff; }
+  .module-card h3 { font-size: 15px; margin: 0 0 4px; font-weight: 700; }
+  .module-card p { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 10px; line-height: 1.4; min-height: 32px; }
+  .module-count { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 12px; }
+  .section-head h2 { font-size: 15.5px; font-weight: 700; margin: 0; }
+
+  .doc-list { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 40px; }
+  .doc-row { display: flex; align-items: center; gap: 14px; padding: 15px 16px; border-bottom: 1px solid var(--border); }
+  .doc-row:last-child { border-bottom: none; }
+  .doc-row-main { flex: 1; min-width: 0; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+  .row-dot { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; }
+  .row-dot svg { width: 14px; height: 14px; color: #fff; }
+  .doc-row-title { font-weight: 600; font-size: 14.5px; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-row-meta { font-size: 12px; color: var(--ink-soft); display: flex; gap: 8px; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { display: inline-block; padding: 2px 8px; border: 1px solid var(--border); border-radius: 20px; font-size: 10.5px; color: var(--ink-soft); flex-shrink: 0; }
+  .doc-row-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+  .empty { border: 1px dashed var(--border); border-radius: 14px; padding: 46px 20px; text-align: center; color: var(--ink-soft); margin: 4px 0 40px; }
+  .empty p { max-width: 340px; margin: 10px auto 18px; font-size: 13.5px; }
+
+  /* ---------- editor shell ---------- */
+  .builder-top { position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top,0px); }
+  .builder-top-row { display: flex; align-items: center; gap: 10px; padding: 14px 0 10px; }
+  .title-input { flex: 1; min-width: 0; border: none; background: none; font-family: 'Manrope', sans-serif; font-size: 17px; font-weight: 700; color: var(--ink); padding: 4px 0; border-bottom: 1px solid transparent; }
+  .title-input:focus { outline: none; border-bottom-color: var(--accent); }
+  .save-status { font-size: 11.5px; color: var(--ink-soft); flex-shrink: 0; white-space: nowrap; }
+  .variant-row { display: flex; gap: 6px; padding-bottom: 10px; overflow-x: auto; }
+  .variant-pill { border: 1px solid var(--border); background: var(--card); padding: 6px 13px; border-radius: 20px; font-size: 12px; color: var(--ink-soft); flex-shrink: 0; white-space: nowrap; }
+  .variant-pill.active { border-color: var(--accent); color: var(--accent-dark); background: var(--accent-soft); }
+  .section-rail { width: 172px; flex-shrink: 0; padding: 18px 12px 40px 0; position: sticky; top: 122px; align-self: flex-start; }
+  .rail-item { display: block; width: 100%; text-align: left; padding: 9px 11px; border-radius: 9px; border: none; background: none; color: var(--ink-soft); font-size: 13px; margin-bottom: 2px; }
+  .rail-item.active { background: var(--card); color: var(--ink); font-weight: 700; box-shadow: inset 2px 0 0 var(--accent); }
+  .rail-item:hover:not(.active) { color: var(--ink); }
+  .section-mobile-tabs { display: none; overflow-x: auto; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .section-mobile-tabs .rail-item { width: auto; flex-shrink: 0; white-space: nowrap; box-shadow: none; border-bottom: 2px solid transparent; border-radius: 0; }
+  .section-mobile-tabs .rail-item.active { border-bottom-color: var(--accent); }
+  .builder-body { display: flex; gap: 4px; align-items: flex-start; }
+  .form-pane { flex: 1; min-width: 0; padding: 20px 0 60px; max-width: 560px; }
+  .preview-pane { width: 400px; flex-shrink: 0; padding: 18px 0 60px 22px; position: sticky; top: 122px; }
+
+  .field { margin-bottom: 19px; }
+  .field label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 600; }
+  .field input[type=text], .field input[type=email], .field input[type=tel], .field input[type=date], .field textarea, .field select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--ink);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 68px; line-height: 1.5; font-size: 14px; }
+  .field-row { display: flex; gap: 14px; }
+  .field-row .field { flex: 1; min-width: 0; }
+  .hint { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .section-title { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+  .section-desc { font-size: 13px; color: var(--ink-soft); margin: 0 0 18px; }
+
+  .repeat-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px 16px 4px; margin-bottom: 14px; background: var(--card); }
+  .repeat-card-head { display: flex; justify-content: space-between; align-items: center; margin: -2px 0 8px; }
+  .repeat-card-head .mini-actions { display: flex; gap: 2px; }
+  .add-row-btn { width: 100%; border: 1px dashed var(--border); border-radius: 10px; padding: 12px; background: none; color: var(--ink-soft); font-size: 13.5px; text-align: center; font-weight: 600; }
+  .add-row-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+  .chip-input-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 20px; padding: 6px 6px 6px 13px; font-size: 13px; background: var(--card); }
+  .chip button { border: none; background: none; color: var(--ink-soft); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .chip button:hover { background: var(--border); color: var(--ink); }
+  .chip-add { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 20px; padding: 6px 6px 6px 13px; min-width: 160px; flex: 1; background: var(--card); }
+  .chip-add input { border: none; flex: 1; background: none; padding: 4px 0; }
+  .chip-add input:focus { outline: none; }
+
+  /* ---------- preview sheet ---------- */
+  .sheet { background: #ffffff; color: #16213a; width: 100%; max-height: 68vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; font-size: 9.5px; line-height: 1.45; }
+  .sheet-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .sheet-actions .btn { flex: 1; justify-content: center; }
+
+  .cv-doc { padding: 26px 24px; font-family: 'IBM Plex Sans', Arial, sans-serif; color: #182238; }
+  .cv-doc h1.cv-name { font-family: 'Fraunces', Georgia, serif; font-size: 21px; margin: 0 0 2px; font-weight: 600; }
+  .cv-doc .cv-role { font-size: 11px; color: #B8842E; margin: 0 0 12px; font-weight: 500; }
+  .cv-doc .cv-contact { font-size: 9px; color: #4a5468; display: flex; flex-wrap: wrap; gap: 3px 10px; margin-bottom: 14px; }
+  .cv-doc h2.cv-h2 { font-family: 'Fraunces', Georgia, serif; font-size: 11.5px; font-weight: 600; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #DAD3C1; color: #1E2A44; }
+  .cv-doc .cv-item { margin-bottom: 9px; }
+  .cv-doc .cv-item-top { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 10px; }
+  .cv-doc .cv-item-sub { font-size: 9.3px; color: #4a5468; margin: 1px 0 3px; font-style: italic; }
+  .cv-doc .cv-item-desc { font-size: 9.3px; color: #232f48; white-space: pre-line; }
+  .cv-doc .cv-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .cv-doc .cv-tag { border: 1px solid #DAD3C1; border-radius: 20px; padding: 2px 8px; font-size: 8.8px; }
+  .cv-doc .cv-profil { font-size: 9.6px; margin-bottom: 4px; white-space: pre-line; }
+  .cv-doc ol { margin: 0 0 4px; padding-left: 16px; font-size: 9.3px; }
+  .cv-doc ol li { margin-bottom: 3px; }
+
+  .cv-doc.tpl-moderne { display: flex; padding: 0; }
+  .tpl-moderne .cv-side { width: 34%; background: #1E2A44; color: #F6F3EB; padding: 24px 16px; }
+  .tpl-moderne .cv-side h1.cv-name { color: #fff; font-size: 18px; }
+  .tpl-moderne .cv-side .cv-role { color: #D9A54B; }
+  .tpl-moderne .cv-side .cv-contact { flex-direction: column; color: #C9C2AF; gap: 5px; }
+  .tpl-moderne .cv-side h2.cv-h2 { color: #F1E4C8; border-bottom-color: rgba(255,255,255,.25); font-size: 10.5px; }
+  .tpl-moderne .cv-side .cv-tag { border-color: rgba(255,255,255,.35); color: #F1E4C8; }
+  .tpl-moderne .cv-main { width: 66%; padding: 24px 20px; }
+  .tpl-sobre .cv-role { color: #4a5468; }
+  .tpl-sobre h2.cv-h2 { border-bottom: none; text-transform: uppercase; letter-spacing: .5px; font-size: 10px; }
+
+  /* lettre */
+  .tpl-lettre { padding: 30px 28px; }
+  .lettre-header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+  .lettre-exp { font-size: 9.3px; line-height: 1.6; white-space: pre-line; max-width: 46%; }
+  .lettre-destdate { text-align: right; max-width: 50%; }
+  .lettre-dest { font-size: 9.3px; line-height: 1.6; white-space: pre-line; margin-bottom: 10px; }
+  .lettre-lieu-date { font-size: 9.3px; color: #4a5468; }
+  .lettre-objet { font-size: 9.8px; margin-bottom: 16px; }
+  .lettre-corps { font-size: 9.6px; line-height: 1.7; white-space: pre-line; margin-bottom: 20px; }
+  .lettre-formule { font-size: 9.6px; line-height: 1.6; white-space: pre-line; margin-bottom: 30px; }
+  .lettre-signature { font-size: 9.8px; font-weight: 600; text-align: right; }
+
+  /* mémoire */
+  .mem-cover { min-height: 46vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px 24px; border-bottom: 1px dashed #DAD3C1; }
+  .mem-etab { font-size: 9.5px; text-transform: uppercase; letter-spacing: .6px; color: #4a5468; }
+  .mem-filiere { font-size: 9px; color: #4a5468; margin-top: 2px; }
+  .mem-kind { font-size: 10px; letter-spacing: 2px; color: #B8842E; margin: 22px 0 10px; font-weight: 600; }
+  .mem-title { font-family: 'Fraunces', Georgia, serif; font-size: 18px; font-weight: 600; max-width: 320px; margin: 0 auto; }
+  .mem-auteur { font-size: 10px; margin-top: 22px; font-weight: 600; }
+  .mem-encadreur { font-size: 9.3px; color: #4a5468; margin-top: 4px; }
+  .mem-annee { font-size: 9px; color: #4a5468; margin-top: 14px; }
+  .mem-block { padding: 22px 24px; border-bottom: 1px dashed #DAD3C1; }
+  .mem-block h2.cv-h2 { margin-top: 0; }
+  .mem-part { padding: 4px 24px 18px; }
+
+  /* ---------- full-screen mobile preview ---------- */
+  .preview-modal { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: none; flex-direction: column; }
+  .preview-modal.open { display: flex; }
+  .preview-modal-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; padding-top: calc(14px + env(safe-area-inset-top,0px)); border-bottom: 1px solid var(--border); }
+  .preview-modal-body { flex: 1; overflow: auto; padding: 18px; }
+  .preview-modal .sheet { max-width: 460px; margin: 0 auto; max-height: none; }
+  .fab-preview { position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom,0px)); z-index: 40; border-radius: 30px; padding: 13px 20px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+  .credits-pill { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom,0px)); left: 74px; z-index: 41; background: var(--card); color: var(--ink); border: 1px solid var(--border); border-radius: 20px; padding: 7px 13px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .credits-pill svg { width: 14px; height: 14px; }
+  .credits-pill.low { color: var(--danger); border-color: var(--danger); }
+  @media (max-width: 900px) { .credits-pill { left: 66px; } }
+
+  .util-row { display: flex; gap: 10px; padding: 4px 0 50px; flex-wrap: wrap; }
+
+  #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 10px; font-size: 13.5px; transition: all .25s ease; pointer-events: none; z-index: 200; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 900px) {
+    .preview-pane { display: none; } .section-rail { display: none; } .section-mobile-tabs { display: flex; }
+    .builder-body { display: block; } .form-pane { max-width: none; padding-bottom: 90px; }
+    .sidebar { border-radius: 0 20px 20px 0; width: 54px; }
+  }
+  @media (min-width: 901px) { .fab-preview { display: none; } }
+
+  #printArea { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { display: block; position: absolute; top: 0; left: 0; width: 100%; }
+    .cv-doc { padding: 0; }
+    .mem-part { page-break-before: always; }
+    .mem-cover { page-break-after: always; min-height: 0; }
+    @page { margin: 14mm; }
+  }
+
+  #splashScreen { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; background: var(--bg); transition: opacity .45s ease; }
+  #splashScreen.hide { opacity: 0; pointer-events: none; }
+  .splash-card { display: flex; flex-direction: column; align-items: center; gap: 18px; width: min(340px, 88vw); text-align: center; }
+  .splash-logo { width: 64px; height: 64px; border-radius: 18px; background: var(--sidebar-icon-active-bg, #4f46e5); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-weight: 700; font-size: 28px; animation: splashPop .6s cubic-bezier(.34,1.56,.64,1) both, splashPulse 2.4s ease-in-out 1.1s infinite; box-shadow: 0 10px 28px rgba(79,70,229,.35); }
+  .splash-title { font-family: 'Fraunces', serif; font-weight: 700; font-size: 22px; opacity: 0; animation: splashFadeUp .5s ease .25s forwards; }
+  .splash-tagline { font-size: 13px; color: var(--ink-soft); opacity: 0; animation: splashFadeUp .5s ease .4s forwards; }
+  .splash-dots { display: flex; gap: 6px; margin-top: 6px; opacity: 0; animation: splashFadeUp .5s ease .55s forwards; }
+  .splash-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--sidebar-icon-active-bg, #4f46e5); animation: splashDot 1.1s ease-in-out infinite; }
+  .splash-dots span:nth-child(2) { animation-delay: .15s; } .splash-dots span:nth-child(3) { animation-delay: .3s; }
+  .splash-form { width: 100%; opacity: 0; animation: splashFadeUp .5s ease .15s forwards; }
+  @keyframes splashPop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes splashPulse { 0%,100% { box-shadow: 0 10px 28px rgba(79,70,229,.35); } 50% { box-shadow: 0 10px 40px rgba(79,70,229,.55); } }
+  @keyframes splashFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes splashDot { 0%,80%,100% { transform: scale(.6); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div id="splashScreen">
+  <div class="splash-card">
+    <div class="splash-logo">C</div>
+    <div class="splash-title">Carnet</div>
+    <div id="splashSub">
+      <div class="splash-tagline">Ton espace de rédaction</div>
+      <div class="splash-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</div>
+<div id="app"></div>
+<div id="printArea"></div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   CARNET — espace de rédaction (CV, lettres, notes,
+   comptes-rendus, mémoires). Stockage local au navigateur.
+   ========================================================= */
+
+const STORE_KEY = 'carnet_store_v2';
+const OLD_CV_KEY = 'carnet_cvs_v1';
+const THEME_KEY = 'carnet_theme';
+const NIV_LANGUE = ['Débutant', 'Intermédiaire', 'Avancé', 'Courant', 'Langue maternelle'];
+
+/* ---------------- abonnement / crédits ---------------- */
+const CREDITS_KEY = 'carnet_credits_v1';
+const FREE_CREDITS = 5;
+const PRICE_FCFA = 600;
+const PAYPAL_BUSINESS_EMAIL = 'nadeurkina@gmail.com';
+const MYFEDA_NUMERO = '70857152';
+const MYFEDA_NOM = 'ESSOLAKINA R YAO';
+const SUPABASE_URL = 'https://gjunjafzazpoidhoswpe.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqdW5qYWZ6YXpwb2lkaG9zd3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTA0MTAsImV4cCI6MjEwNjE4NjQxMH0.pc0uIXIwUi6N-fdGC8t5hxeNTEfBArMVCXlP-KKSXbA';
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let session = null, authEmail = '', authStep = 'email';
+let credits = { balance: 0, premium: false, premiumUntil: null };
+function hasCredit() { return credits.premium || credits.balance > 0; }
+async function refreshProfile() {
+  if (!sb || !session) { credits = { balance: 0, premium: false, premiumUntil: null }; updateCreditsBadge(); return; }
+  const { data } = await sb.from('profiles').select('credits,premium_until').eq('user_id', session.user.id).single();
+  if (data) {
+    const until = data.premium_until ? new Date(data.premium_until).getTime() : null;
+    credits = { balance: data.credits, premium: !!until && until > Date.now(), premiumUntil: until };
+  }
+  updateCreditsBadge();
+}
+function showSplashLogin() {
+  const sub = document.getElementById('splashSub');
+  if (!sub) return;
+  sub.innerHTML = `<div class="splash-form" id="splashForm">
+    <p class="splash-tagline" style="margin-bottom:14px;">Connecte-toi pour continuer, ${FREE_CREDITS} crédits gratuits à la clé</p>
+    <div class="field"><input type="email" id="splashEmail" placeholder="ton@email.com" autocomplete="email"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="splashSendCode()">Recevoir le code</button>
+  </div>`;
+}
+function showSplashCode() {
+  const sub = document.getElementById('splashSub');
+  if (!sub) return;
+  sub.innerHTML = `<div class="splash-form">
+    <p class="splash-tagline" style="margin-bottom:14px;">Code envoyé à ${esc(authEmail)}</p>
+    <div class="field"><input type="text" id="splashCode" inputmode="numeric" maxlength="8" placeholder="Code reçu par email" autocomplete="one-time-code"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="splashVerifyCode()">Valider</button>
+    <p class="hint" style="margin-top:10px;">Rien reçu ? Regarde les spams, ou <a href="#" onclick="event.preventDefault();splashSendCode(authEmail)">renvoie le code</a>.</p>
+  </div>`;
+}
+async function splashSendCode(again) {
+  const email = (typeof again === 'string' ? again : (document.getElementById('splashEmail').value || '')).trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(email)) { showToast('Email invalide'); return; }
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  if (error) { showToast("Envoi impossible : " + error.message); return; }
+  authEmail = email; showSplashCode();
+}
+async function splashVerifyCode() {
+  const token = (document.getElementById('splashCode').value || '').trim();
+  const { data, error } = await sb.auth.verifyOtp({ email: authEmail, token, type: 'email' });
+  if (error) { showToast('Code incorrect ou expiré'); return; }
+  session = data.session; await refreshProfile(); hideSplash();
+}
+function hideSplash() {
+  const el = document.getElementById('splashScreen');
+  if (!el) return;
+  el.classList.add('hide');
+  setTimeout(() => el.remove(), 500);
+}
+async function initAuth() {
+  if (!sb) { hideSplash(); return; }
+  const { data } = await sb.auth.getSession();
+  session = data.session; await refreshProfile();
+  sb.auth.onAuthStateChange((_e, sess) => { session = sess; refreshProfile(); });
+  if (session) hideSplash(); else showSplashLogin();
+}
+function updateCreditsBadge() {
+  const el = document.getElementById('creditsBadge');
+  if (!el) return;
+  el.innerHTML = !session ? `${ICON.sparkle} Se connecter`
+    : credits.premium ? `${ICON.sparkle} Premium`
+    : `${ICON.sparkle} ${credits.balance} crédit${credits.balance>1?'s':''}`;
+  el.classList.toggle('low', !!session && !credits.premium && credits.balance <= 0);
+}
+function onCreditsClick() { if (!session) openAuthModal(); else openSubscribeModal(); }
+function gateAi() {
+  if (!sb) { showToast('Service indisponible, vérifie ta connexion'); return false; }
+  if (!session) { openAuthModal(); return false; }
+  if (!hasCredit()) { openSubscribeModal(); return false; }
+  return true;
+}
+async function callAi(system, messages) {
+  const { data: sd } = await sb.auth.getSession();
+  const tok = sd.session && sd.session.access_token;
+  if (!tok) { session = null; updateCreditsBadge(); openAuthModal(); throw new Error('auth'); }
+  const r = await fetch(SUPABASE_URL + '/functions/v1/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'apikey': SUPABASE_ANON_KEY },
+    body: JSON.stringify({ system, messages })
+  });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 402) { await refreshProfile(); openSubscribeModal(); throw new Error('no_credits'); }
+  if (r.status === 401) { session = null; updateCreditsBadge(); openAuthModal(); throw new Error('auth'); }
+  if (!r.ok) throw new Error(data.error || 'ai_error');
+  if (typeof data.credits_left === 'number') credits.balance = data.credits_left;
+  updateCreditsBadge();
+  return data;
+}
+/* ---------------- connexion par email (code) ---------------- */
+function openAuthModal() { authStep = 'email'; renderAuth(); document.getElementById('authModal').classList.add('open'); }
+function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+function renderAuth() {
+  const b = document.getElementById('authBody');
+  if (authStep === 'email') {
+    b.innerHTML = `<p class="section-desc">Connecte-toi avec ton email pour recevoir tes <strong>${FREE_CREDITS} crédits gratuits</strong> et les retrouver sur tous tes appareils.</p>
+      <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="ton@email.com" autocomplete="email"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="sendAuthCode()">Recevoir le code</button>`;
+  } else {
+    b.innerHTML = `<p class="section-desc">Un code vient d'être envoyé à <strong>${esc(authEmail)}</strong>.</p>
+      <div class="field"><label>Code reçu par email</label><input type="text" id="authCode" inputmode="numeric" maxlength="8" placeholder="Code" autocomplete="one-time-code"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="verifyAuthCode()">Valider</button>
+      <p class="hint">Rien reçu ? Regarde dans les spams, ou <a href="#" onclick="event.preventDefault();sendAuthCode(authEmail)">renvoie le code</a>.</p>`;
+  }
+}
+async function sendAuthCode(again) {
+  const email = (typeof again === 'string' ? again : (document.getElementById('authEmail').value || '')).trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(email)) { showToast('Email invalide'); return; }
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  if (error) { showToast("Envoi impossible : " + error.message); return; }
+  authEmail = email; authStep = 'code'; renderAuth();
+}
+async function verifyAuthCode() {
+  const token = (document.getElementById('authCode').value || '').trim();
+  const { data, error } = await sb.auth.verifyOtp({ email: authEmail, token, type: 'email' });
+  if (error) { showToast('Code incorrect ou expiré'); return; }
+  session = data.session; await refreshProfile(); closeAuthModal(); showToast('Connecté ✨');
+}
+async function signOutUser() {
+  await sb.auth.signOut(); session = null; await refreshProfile(); closeSubscribeModal();
+}
+function handlePaypalReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('abo')) {
+    params.delete('abo');
+    const qs = params.toString();
+    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+  }
+}
+
+let store = { cv: [], lettres: [], notes: [], cr: [], mem: [] };
+let state = {
+  module: 'dashboard', screen: 'list', activeId: null, section: '',
+  query: '', previewOpen: false, doc: null, saveTimer: null, savedLabel: ''
+};
+
+/* ---------------- storage ---------------- */
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      store = Object.assign({ cv: [], lettres: [], notes: [], cr: [], mem: [] }, parsed);
+      return;
+    }
+    const old = localStorage.getItem(OLD_CV_KEY);
+    if (old) {
+      const list = JSON.parse(old);
+      if (Array.isArray(list)) store.cv = list;
+      persistStore();
+    }
+  } catch (e) { /* start fresh */ }
+}
+function persistStore() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); return true; }
+  catch (e) { showToast("Échec de l'enregistrement (mémoire du navigateur pleine ?)"); return false; }
+}
+function genId() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+/* ---------------- helpers ---------------- */
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(ts) { return new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); }
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function excerpt(s, n) { s = (s||'').trim().replace(/\s+/g,' '); return s.length > n ? s.slice(0,n) + '…' : s; }
+
+/* ---------------- theme ---------------- */
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
+}
+function isDark() {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (saved) return saved === 'dark';
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function toggleTheme() {
+  const next = isDark() ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  document.documentElement.setAttribute('data-theme', next);
+  render();
+}
+
+/* =========================================================
+   MODULE DEFINITIONS
+   ========================================================= */
+const MODULES = {
+  cv: {
+    label: 'CV', singular: 'CV', article: 'un', color: 'var(--c-cv)', icon: 'cv',
+    desc: 'Ton CV, en 3 mises en page.',
+    variants: [{key:'classique',label:'Classique'},{key:'moderne',label:'Moderne'},{key:'sobre',label:'Sobre'}],
+    sections: [
+      {key:'identite', label:'Identité'}, {key:'profil', label:'Profil'},
+      {key:'formation', label:'Formation'}, {key:'experience', label:'Expérience'},
+      {key:'competences', label:'Compétences'}, {key:'langues', label:'Langues'},
+      {key:'interets', label:"Centres d'intérêt"}
+    ],
+    blank() {
+      return { id: genId(), titre: 'Nouveau CV', template: 'classique', updatedAt: Date.now(),
+        identite: { prenom:'', nom:'', poste:'', email:'', telephone:'', ville:'' }, profil:'',
+        formations: [], experiences: [], competences: [], langues: [], interets: [] };
+    },
+    rowMeta(d) {
+      const n = [d.identite && d.identite.prenom, d.identite && d.identite.nom].filter(Boolean).join(' ');
+      return (n ? esc(n) + ' · ' : '') + 'modifié le ' + fmtDate(d.updatedAt);
+    },
+    renderSection: renderCvSection,
+    buildPreview: buildCvHtml
+  },
+  lettres: {
+    label: 'Lettres', singular: 'lettre', article: 'une', color: 'var(--c-lettres)', icon: 'mail',
+    desc: 'Motivation, démission, réclamation…',
+    variants: [{key:'motivation',label:'Motivation'},{key:'demission',label:'Démission'},{key:'reclamation',label:'Réclamation'},{key:'libre',label:'Libre'}],
+    sections: [ {key:'infos', label:'En-têtes'}, {key:'contenu', label:'Contenu'} ],
+    blank() {
+      return { id: genId(), titre: 'Nouvelle lettre', template: 'motivation', updatedAt: Date.now(),
+        expediteurNom:'', expediteurAdresse:'', destinataire:'', destinataireAdresse:'',
+        lieu:'', date:'', objet:'Candidature au poste de …', corps:'', formule:"Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.", signature:'' };
+    },
+    rowMeta(d) { return (d.destinataire ? esc(d.destinataire) + ' · ' : '') + 'modifié le ' + fmtDate(d.updatedAt); },
+    renderSection: renderLettreSection,
+    buildPreview: buildLettreHtml
+  },
+  notes: {
+    label: 'Notes', singular: 'note', article: 'une', color: 'var(--c-notes)', icon: 'note',
+    desc: 'Idées et notes rapides.',
+    variants: null,
+    sections: [ {key:'contenu', label:'Contenu'} ],
+    blank() { return { id: genId(), titre: 'Nouvelle note', updatedAt: Date.now(), contenu:'' }; },
+    rowMeta(d) { return (d.contenu ? excerpt(d.contenu, 60) + ' · ' : '') + fmtDate(d.updatedAt); },
+    renderSection: renderNoteSection,
+    buildPreview: buildNoteHtml
+  },
+  cr: {
+    label: 'Comptes-rendus', singular: 'compte-rendu', article: 'un', color: 'var(--c-cr)', icon: 'clipboard',
+    desc: 'Réunions, points, décisions, actions.',
+    variants: null,
+    sections: [ {key:'infos', label:'Informations'}, {key:'points', label:'Points abordés'}, {key:'actions', label:'Actions'} ],
+    blank() {
+      return { id: genId(), titre: 'Nouveau compte-rendu', updatedAt: Date.now(),
+        date:'', lieu:'', participants: [], ordreDuJour: [], points: [], actions: [], prochaineReunion:'' };
+    },
+    rowMeta(d) { return (d.date ? esc(d.date) + ' · ' : '') + 'modifié le ' + fmtDate(d.updatedAt); },
+    renderSection: renderCrSection,
+    buildPreview: buildCrHtml
+  },
+  mem: {
+    label: 'Mémoires', singular: 'mémoire', article: 'un', color: 'var(--c-mem)', icon: 'book',
+    desc: 'Licence ou master, chapitre par chapitre.',
+    variants: null,
+    sections: [ {key:'garde', label:'Page de garde'}, {key:'avant', label:'Avant-propos'}, {key:'parties', label:'Chapitres'} ],
+    blank() {
+      return { id: genId(), titre: 'Nouveau mémoire', updatedAt: Date.now(),
+        etablissement:'', filiere:'', auteur:'', encadreur:'', anneeAcademique:'',
+        dedicace:'', remerciements:'', resume:'', motsCles: [], parties: [] };
+    },
+    rowMeta(d) { return (d.filiere ? esc(d.filiere) + ' · ' : '') + 'modifié le ' + fmtDate(d.updatedAt); },
+    renderSection: renderMemSection,
+    buildPreview: buildMemHtml
+  }
+};
+const MODULE_KEYS = ['cv','lettres','notes','cr','mem'];
+
+/* =========================================================
+   GENERIC DOC OPERATIONS
+   ========================================================= */
+function persistActiveDoc() {
+  if (!state.doc) return;
+  state.doc.updatedAt = Date.now();
+  const arr = store[state.module];
+  const idx = arr.findIndex(d => d.id === state.doc.id);
+  if (idx >= 0) arr[idx] = state.doc; else arr.unshift(state.doc);
+  persistStore();
+}
+function debounceSave() {
+  clearTimeout(state.saveTimer);
+  state.savedLabel = 'Enregistrement…'; updateSaveStatus();
+  state.saveTimer = setTimeout(() => {
+    persistActiveDoc();
+    state.savedLabel = 'Enregistré ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    updateSaveStatus();
+  }, 500);
+}
+function updateSaveStatus() { const el = document.getElementById('saveStatus'); if (el) el.textContent = state.savedLabel; }
+
+function goDashboard() {
+  clearTimeout(state.saveTimer); if (state.doc) persistActiveDoc();
+  state.module = 'dashboard'; state.screen = 'list'; state.doc = null; state.query=''; render();
+}
+function goModule(key) {
+  clearTimeout(state.saveTimer); if (state.doc) persistActiveDoc();
+  state.module = key; state.screen = 'list'; state.doc = null; state.query=''; render();
+}
+function openDoc(key, id) {
+  const arr = store[key]; const found = arr.find(d => d.id === id); if (!found) return;
+  state.doc = Object.assign(MODULES[key].blank(), found);
+  state.module = key; state.screen = 'edit'; state.section = MODULES[key].sections[0].key;
+  state.savedLabel = 'Enregistré ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  render();
+}
+function createDoc(key) {
+  const doc = MODULES[key].blank();
+  store[key].unshift(doc); persistStore(); openDoc(key, doc.id);
+}
+function duplicateDoc(key, id, ev) {
+  ev && ev.stopPropagation();
+  const src = store[key].find(d => d.id === id); if (!src) return;
+  const copy = JSON.parse(JSON.stringify(src)); copy.id = genId(); copy.titre = src.titre + ' (copie)'; copy.updatedAt = Date.now();
+  store[key].unshift(copy); persistStore(); renderModuleListRows(key);
+  showToast('Dupliqué');
+}
+function deleteDoc(key, id, ev) {
+  ev && ev.stopPropagation();
+  if (!confirm('Supprimer définitivement ce document ? Cette action est irréversible.')) return;
+  store[key] = store[key].filter(d => d.id !== id); persistStore(); renderModuleListRows(key);
+  showToast('Supprimé');
+}
+
+function setTitre(val) { state.doc.titre = val; debounceSave(); }
+function setField(field, val) { state.doc[field] = val; debounceSave(); syncPreview(); }
+function setVariant(val) {
+  state.doc.template = val;
+  if (state.module === 'lettres') {
+    const defaults = { motivation:'Candidature au poste de …', demission:'Lettre de démission', reclamation:'Réclamation concernant …', libre:'' };
+    if (!state.doc.objet || Object.values(defaults).includes(state.doc.objet)) state.doc.objet = defaults[val] || '';
+  }
+  debounceSave(); renderEditor();
+}
+function addItem(key, defaults) { state.doc[key].push(Object.assign({ id: genId() }, defaults)); debounceSave(); renderEditor(); }
+function removeItem(key, id) { state.doc[key] = state.doc[key].filter(i => i.id !== id); debounceSave(); renderEditor(); }
+function setItemField(key, id, field, val) { const it = state.doc[key].find(i => i.id === id); if (it) it[field] = val; debounceSave(); syncPreview(); }
+function moveItem(key, id, dir) {
+  const arr = state.doc[key]; const idx = arr.findIndex(i => i.id === id); const j = idx + dir;
+  if (idx < 0 || j < 0 || j >= arr.length) return;
+  const tmp = arr[idx]; arr[idx] = arr[j]; arr[j] = tmp; debounceSave(); renderEditor();
+}
+function addChip(key, val, inputEl) {
+  const v = (val || '').trim(); if (!v) return;
+  state.doc[key].push({ id: genId(), texte: v }); if (inputEl) inputEl.value = ''; debounceSave(); renderEditor();
+}
+function removeChip(key, id) { state.doc[key] = state.doc[key].filter(i => i.id !== id); debounceSave(); renderEditor(); }
+function setQuery(val) { state.query = val; renderModuleListRows(state.module); }
+
+/* =========================================================
+   ROOT RENDER
+   ========================================================= */
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="shell">
+      <nav class="sidebar" id="sidebar"></nav>
+      <main class="main"><div class="wrap" id="main"></div></main>
+    </div>
+    <button class="btn btn-primary fab-preview" id="fabPreview" style="display:none" onclick="openPreviewModal()">${ICON.eye} Aperçu</button>
+    <button class="credits-pill" id="creditsBadge" onclick="onCreditsClick()"></button>
+    <div class="preview-modal" id="previewModal">
+      <div class="preview-modal-top"><strong class="ui-head">Aperçu</strong><button class="icon-btn" onclick="closePreviewModal()">${ICON.close}</button></div>
+      <div class="preview-modal-body" id="previewModalBody"></div>
+    </div>
+    <div class="preview-modal" id="aiModal">
+      <div class="preview-modal-top"><strong class="ui-head">${ICON.sparkle} Générer avec l'IA</strong><button class="icon-btn" onclick="closeAiModal()">${ICON.close}</button></div>
+      <div class="preview-modal-body">
+        <p class="section-desc" id="aiHint"></p>
+        <div class="field"><textarea id="aiInput" rows="8" placeholder="Décris ta situation, ton parcours, ce que tu veux…"></textarea></div>
+        <input type="file" id="aiFileInput" accept="image/*,application/pdf,.txt,.md,text/plain" multiple style="display:none" onchange="handleAiFiles(this.files)">
+        <button class="btn btn-sm" id="aiAttachBtn" type="button" onclick="document.getElementById('aiFileInput').click()" style="margin-bottom:8px;">📎 Joindre un fichier ou une image</button>
+        <div id="aiFileList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+        <p class="hint" style="margin-top:0;margin-bottom:14px;">Joins un exemple (CV, lettre, document, photo) : l'IA s'en inspire pour la structure et le style, ou s'en sert comme source d'infos. Formats : images, PDF, .txt (max 3 fichiers, 5 Mo chacun).</p>
+        <button class="btn btn-primary" id="aiGenBtn" onclick="runAiGenerate()" style="width:100%;justify-content:center;">Générer</button>
+        <p class="hint">L'IA remplit tout le document à partir de ta description. Relis et ajuste toujours avant d'utiliser le résultat.</p>
+      </div>
+    </div>
+    <div class="preview-modal" id="subModal">
+      <div class="preview-modal-top"><strong class="ui-head">${ICON.sparkle} Abonnement Carnet</strong><button class="icon-btn" onclick="closeSubscribeModal()">${ICON.close}</button></div>
+      <div class="preview-modal-body" id="subModalBody"></div>
+    </div>
+    <div class="preview-modal" id="authModal">
+      <div class="preview-modal-top"><strong class="ui-head">${ICON.sparkle} Connexion</strong><button class="icon-btn" onclick="closeAuthModal()">${ICON.close}</button></div>
+      <div class="preview-modal-body" id="authBody"></div>
+    </div>`;
+  renderSidebar();
+  updateCreditsBadge();
+  if (state.module === 'dashboard') renderDashboardContent();
+  else if (state.module === 'assistant') renderAssistantContent();
+  else if (state.screen === 'list') renderModuleListScreen(state.module);
+  else renderEditorScreen();
+}
+
+function goAssistant() {
+  clearTimeout(state.saveTimer); if (state.doc) persistActiveDoc();
+  state.module = 'assistant'; state.screen = 'chat'; state.doc = null; render();
+}
+
+function renderSidebar() {
+  const items = [{key:'dashboard', icon:'grid'}].concat(MODULE_KEYS.map(k => ({key:k, icon:MODULES[k].icon})));
+  document.getElementById('sidebar').innerHTML = `
+    <div class="side-logo">C</div>
+    <div class="side-nav">
+      ${items.map(it => `<button class="side-btn ${state.module===it.key?'active':''}" title="${it.key==='dashboard'?'Accueil':MODULES[it.key].label}" onclick="${it.key==='dashboard'?'goDashboard()':`goModule('${it.key}')`}">${ICON[it.icon]}</button>`).join('')}
+      <button class="side-btn ${state.module==='assistant'?'active':''}" title="Assistant IA — recherche libre" onclick="goAssistant()">${ICON.sparkle}</button>
+    </div>
+    <div class="side-foot">
+      <button class="side-btn" title="Sauvegarder / importer" onclick="openBackupMenu()">${ICON.backup}</button>
+      <button class="side-btn" title="Thème clair/sombre" onclick="toggleTheme()">${isDark() ? ICON.sun : ICON.moon}</button>
+    </div>`;
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboardContent() {
+  const all = [];
+  MODULE_KEYS.forEach(k => (store[k]||[]).forEach(d => all.push({k, d})));
+  all.sort((a,b) => b.d.updatedAt - a.d.updatedAt);
+  const recent = all.slice(0, 8);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bonjour' : (hour < 18 ? 'Bon après-midi' : 'Bonsoir');
+
+  document.getElementById('main').innerHTML = `
+    <div class="topbar">
+      <p class="greet">${greeting} 👋</p>
+      <p class="greet-sub">Qu'est-ce qu'on rédige aujourd'hui ?</p>
+    </div>
+    <div class="module-grid">
+      ${MODULE_KEYS.map(k => {
+        const m = MODULES[k]; const count = (store[k]||[]).length;
+        return `<button class="module-card" onclick="goModule('${k}')">
+          <div class="module-ico" style="background:${m.color}">${ICON[m.icon]}</div>
+          <h3>${m.label}</h3>
+          <p>${m.desc}</p>
+          <div class="module-count">${count} ${count > 1 ? (k==='cv'?'CV':'documents') : (k==='cv'?'CV':'document')}</div>
+        </button>`;
+      }).join('')}
+    </div>
+    <div class="section-head"><h2>Documents récents</h2></div>
+    ${recent.length === 0 ? `
+      <div class="empty"><p>Rien pour l'instant. Choisis un type de document ci-dessus pour commencer.</p></div>
+    ` : `<div class="doc-list">${recent.map(({k,d}) => docRow(k,d)).join('')}</div>`}
+  `;
+}
+
+function docRow(key, d) {
+  const m = MODULES[key];
+  const label = key==='cv' ? 'CV' : m.singular.charAt(0).toUpperCase()+m.singular.slice(1);
+  return `
+  <div class="doc-row">
+    <div class="doc-row-main" onclick="openDoc('${key}','${d.id}')">
+      <div class="row-dot" style="background:${m.color}">${ICON[m.icon]}</div>
+      <div style="min-width:0;">
+        <p class="doc-row-title">${esc(d.titre || 'Sans titre')}</p>
+        <div class="doc-row-meta"><span class="badge">${label}</span><span>${m.rowMeta(d)}</span></div>
+      </div>
+    </div>
+    <div class="doc-row-actions">
+      <button class="icon-btn" title="Dupliquer" onclick="duplicateDoc('${key}','${d.id}', event)">${ICON.copy}</button>
+      <button class="icon-btn" title="Supprimer" onclick="deleteDoc('${key}','${d.id}', event)">${ICON.trash}</button>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   MODULE LIST SCREEN
+   ========================================================= */
+function renderModuleListScreen(key) {
+  const m = MODULES[key];
+  document.getElementById('main').innerHTML = `
+    <div class="topbar">
+      <div class="topbar-row">
+        <div><p class="page-title">${m.label}</p><p class="page-sub">${m.desc}</p></div>
+        <div class="topbar-actions">
+          <div class="search-box">${ICON.search}<input type="text" placeholder="Rechercher…" oninput="setQuery(this.value)"></div>
+          <button class="btn btn-primary" onclick="createDoc('${key}')">${ICON.plus} Nouveau</button>
+        </div>
+      </div>
+    </div>
+    <div id="listRows"></div>
+  `;
+  renderModuleListRows(key);
+}
+function renderModuleListRows(key) {
+  const holder = document.getElementById('listRows'); if (!holder) return;
+  const m = MODULES[key];
+  const q = (state.query||'').trim().toLowerCase();
+  let list = (store[key]||[]).slice().sort((a,b) => b.updatedAt - a.updatedAt);
+  if (q) list = list.filter(d => (d.titre||'').toLowerCase().includes(q));
+  if (list.length === 0) {
+    holder.innerHTML = `<div class="empty"><p>${q ? 'Aucun résultat pour cette recherche.' : `Pas encore ${m.article} ${m.singular} ici.`}</p>${q ? '' : `<button class="btn btn-primary" onclick="createDoc('${key}')">${ICON.plus} Créer ${m.article} ${m.singular}</button>`}</div>`;
+    return;
+  }
+  holder.innerHTML = `<div class="doc-list">${list.map(d => docRow(key, d)).join('')}</div>`;
+}
+
+/* =========================================================
+   EDITOR SCREEN (generic shell, per-module sections)
+   ========================================================= */
+function renderEditorScreen() {
+  const m = MODULES[state.module];
+  document.getElementById('main').innerHTML = `
+    <div class="builder-top">
+      <div class="builder-top-row">
+        <button class="icon-btn" title="Retour" onclick="goModule('${state.module}')">${ICON.back}</button>
+        <input class="title-input" id="titleInput" value="" oninput="setTitre(this.value)">
+        <span class="save-status" id="saveStatus"></span>
+        <button class="btn btn-sm" onclick="openAiModal()">${ICON.sparkle} Générer avec l'IA</button>
+      </div>
+      ${m.variants ? `<div class="variant-row" id="variantRow"></div>` : ''}
+      <div class="section-mobile-tabs" id="mobileTabs"></div>
+    </div>
+    <div class="builder-body">
+      <nav class="section-rail" id="rail"></nav>
+      <div class="form-pane" id="formPane"></div>
+      <div class="preview-pane" id="previewPane"></div>
+    </div>`;
+  document.getElementById('fabPreview').style.display = '';
+  renderEditor();
+}
+function renderEditor() {
+  const m = MODULES[state.module];
+  document.getElementById('titleInput').value = state.doc.titre || '';
+  updateSaveStatus();
+
+  if (m.variants) {
+    document.getElementById('variantRow').innerHTML = m.variants.map(v => `
+      <button class="variant-pill ${state.doc.template === v.key ? 'active' : ''}" onclick="setVariant('${v.key}')">${v.label}</button>
+    `).join('');
+  }
+  const railHtml = m.sections.map(s => `<button class="rail-item ${state.section===s.key?'active':''}" onclick="setSection('${s.key}')">${s.label}</button>`).join('');
+  document.getElementById('rail').innerHTML = m.sections.length > 1 ? railHtml : '';
+  document.getElementById('mobileTabs').innerHTML = m.sections.length > 1 ? railHtml : '';
+
+  document.getElementById('formPane').innerHTML = m.renderSection(state.doc, state.section);
+  syncPreview();
+}
+function setSection(key) { state.section = key; renderEditor(); }
+function syncPreview() {
+  const m = MODULES[state.module];
+  const html = m.buildPreview(state.doc);
+  const pane = document.getElementById('previewPane');
+  if (pane) pane.innerHTML = `
+    <div class="sheet">${html}</div>
+    <div class="sheet-actions">
+      <button class="btn btn-sm" onclick="printDoc()">${ICON.print} Imprimer / PDF</button>
+      <button class="btn btn-sm" onclick="downloadStandalone()">${ICON.download} Fichier HTML</button>
+    </div>`;
+  const modalBody = document.getElementById('previewModalBody');
+  if (modalBody && state.previewOpen) modalBody.innerHTML = `
+    <div class="sheet" style="max-height:none;">${html}</div>
+    <div class="sheet-actions">
+      <button class="btn btn-sm" onclick="printDoc()">${ICON.print} Imprimer / PDF</button>
+      <button class="btn btn-sm" onclick="downloadStandalone()">${ICON.download} Fichier HTML</button>
+    </div>`;
+}
+function openPreviewModal() { state.previewOpen = true; document.getElementById('previewModal').classList.add('open'); syncPreview(); }
+function closePreviewModal() { state.previewOpen = false; document.getElementById('previewModal').classList.remove('open'); }
+
+/* =========================================================
+   GÉNÉRATION IA — l'IA peut rédiger un document entier
+   ========================================================= */
+const AI_SCHEMAS = {
+  cv: {
+    hint: "Décris ton profil : formation, ville, poste recherché, stages ou emplois, compétences, langues…",
+    system: `Tu aides un(e) étudiant(e) togolais(e) à remplir son CV. À partir de sa description, réponds UNIQUEMENT avec un objet JSON, sans texte autour ni markdown, de cette forme exacte :
+{"identite":{"poste":"","ville":""},"profil":"(3-4 phrases)","formations":[{"diplome":"","etablissement":"","lieu":"","debut":"","fin":"","description":""}],"experiences":[{"poste":"","structure":"","lieu":"","debut":"","fin":"","description":""}],"competences":["..."],"langues":[{"langue":"Français","niveau":"Courant"}],"interets":["..."]}
+Utilise les informations données par l'étudiant ; complète intelligemment et de façon réaliste ce qui manque, reste concis, rédige en français.`
+  },
+  lettres: {
+    hint: "Décris le contexte : type de lettre, destinataire, poste ou motif, ton parcours…",
+    system: `Tu aides à écrire une lettre. Réponds UNIQUEMENT avec un objet JSON, sans texte autour ni markdown :
+{"destinataire":"","objet":"","corps":"...","formule":"...","signature":""}
+"corps" est le texte complet du corps de la lettre (plusieurs paragraphes séparés par des sauts de ligne), rédigé en français, adapté au contexte donné.`
+  },
+  notes: {
+    hint: "Décris le sujet de la note ou ce que tu veux qu'elle contienne…",
+    system: `Réponds UNIQUEMENT avec un objet JSON, sans texte autour ni markdown : {"titre":"","contenu":"..."}. Rédige une note claire et utile en français à partir de la demande.`
+  },
+  cr: {
+    hint: "Décris la réunion : date, lieu, participants, sujets abordés, décisions…",
+    system: `Tu aides à rédiger un compte-rendu de réunion. Réponds UNIQUEMENT avec un objet JSON, sans texte autour ni markdown :
+{"date":"","lieu":"","participants":["..."],"ordreDuJour":["..."],"points":[{"sujet":"","notes":""}],"actions":[{"tache":"","responsable":"","echeance":""}],"prochaineReunion":""}
+Utilise les informations données, complète raisonnablement, rédige en français.`
+  },
+  mem: {
+    hint: "Décris ton sujet de mémoire, ta filière, ton plan si tu en as un…",
+    system: `Tu aides un(e) étudiant(e) togolais(e) à structurer un mémoire. Réponds UNIQUEMENT avec un objet JSON, sans texte autour ni markdown :
+{"titre":"","filiere":"","resume":"(5-6 phrases)","motsCles":["..."],"parties":[{"titre":"","contenu":"(un paragraphe de départ, 80-120 mots)"}]}
+Propose 3 à 4 chapitres cohérents avec le sujet. Rédige en français, reste concis : le contenu de chaque chapitre est un point de départ que l'étudiant développera ensuite (au besoin en redemandant à l'IA de continuer un chapitre précis).`
+  }
+};
+function openAiModal() {
+  const schema = AI_SCHEMAS[state.module]; if (!schema) return;
+  document.getElementById('aiHint').textContent = schema.hint;
+  document.getElementById('aiInput').value = '';
+  aiFiles = []; renderAiFiles();
+  document.getElementById('aiModal').classList.add('open');
+}
+/* ---------------- IA : fichiers et images joints ---------------- */
+let aiFiles = [];
+const AI_MAX_FILES = 3, AI_MAX_BYTES = 5 * 1024 * 1024;
+function fileToDataURL(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('read')); r.readAsDataURL(file); });
+}
+function fileToText(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('read')); r.readAsText(file); });
+}
+function compressImage(dataUrl, maxSide) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => rej(new Error('img'));
+    img.src = dataUrl;
+  });
+}
+async function handleAiFiles(fileList) {
+  const files = Array.from(fileList || []);
+  for (const f of files) {
+    if (aiFiles.length >= AI_MAX_FILES) { showToast('Maximum ' + AI_MAX_FILES + ' fichiers'); break; }
+    try {
+      if (f.type.startsWith('image/')) {
+        const url = await compressImage(await fileToDataURL(f), 1600);
+        aiFiles.push({ name: f.name, kind: 'image', mediaType: 'image/jpeg', data: url.split(',')[1], preview: url });
+      } else if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+        if (f.size > AI_MAX_BYTES) { showToast(f.name + ' dépasse 5 Mo'); continue; }
+        const url = await fileToDataURL(f);
+        aiFiles.push({ name: f.name, kind: 'pdf', mediaType: 'application/pdf', data: url.split(',')[1] });
+      } else if (f.type.startsWith('text/') || /\.(txt|md)$/i.test(f.name)) {
+        if (f.size > AI_MAX_BYTES) { showToast(f.name + ' dépasse 5 Mo'); continue; }
+        aiFiles.push({ name: f.name, kind: 'text', data: (await fileToText(f)).slice(0, 30000) });
+      } else {
+        showToast(f.name + ' : format non pris en charge (images, PDF, .txt)');
+      }
+    } catch (e) { showToast('Impossible de lire ' + f.name); }
+  }
+  document.getElementById('aiFileInput').value = '';
+  renderAiFiles();
+}
+function removeAiFile(i) { aiFiles.splice(i, 1); renderAiFiles(); }
+function renderAiFiles() {
+  const el = document.getElementById('aiFileList'); if (!el) return;
+  el.innerHTML = aiFiles.map((f, i) => `
+    <span style="display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--card);border-radius:10px;padding:5px 8px;font-size:12px;max-width:100%;">
+      ${f.kind === 'image' ? `<img src="${f.preview}" alt="" style="width:26px;height:26px;object-fit:cover;border-radius:5px;">` : (f.kind === 'pdf' ? '📄' : '📝')}
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;">${esc(f.name)}</span>
+      <button type="button" onclick="removeAiFile(${i})" style="border:none;background:none;cursor:pointer;color:var(--ink-soft);font-size:15px;line-height:1;padding:0 2px;" aria-label="Retirer">×</button>
+    </span>`).join('');
+}
+function closeAiModal() { document.getElementById('aiModal').classList.remove('open'); }
+/* ---------------- abonnement : modal ---------------- */
+function openSubscribeModal() {
+  renderSubscribeModal();
+  document.getElementById('subModal').classList.add('open');
+}
+function closeSubscribeModal() { document.getElementById('subModal').classList.remove('open'); }
+function renderSubscribeBody() {
+  const body = document.getElementById('subModalBody');
+  if (credits.premium) {
+    const until = credits.premiumUntil ? new Date(credits.premiumUntil).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '';
+    body.innerHTML = `
+      <p class="section-title">Abonnement actif ✨</p>
+      <p class="section-desc">Génération IA illimitée jusqu'au ${esc(until)}.</p>`;
+    return;
+  }
+  const returnUrl = window.location.origin + window.location.pathname + '?abo=paypal_ok';
+  body.innerHTML = `
+    <p class="section-desc">Il te reste <strong>${credits.balance}</strong> crédit${credits.balance>1?'s':''} gratuit${credits.balance>1?'s':''} (${FREE_CREDITS} offerts à l'ouverture). Chaque génération IA (document ou assistant) consomme 1 crédit.</p>
+    <p class="section-desc">Abonnement : <strong>${PRICE_FCFA} FCFA / mois</strong>, génération illimitée.</p>
+
+    <p class="field label" style="font-size:13px;font-weight:700;margin:18px 0 8px;">Payer par PayPal</p>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" style="margin-bottom:6px;">
+      <input type="hidden" name="cmd" value="_xclick">
+      <input type="hidden" name="business" value="${esc(PAYPAL_BUSINESS_EMAIL)}">
+      <input type="hidden" name="item_name" value="Abonnement Carnet — 1 mois">
+      <input type="hidden" name="amount" value="1.04">
+      <input type="hidden" name="currency_code" value="USD">
+      <input type="hidden" name="return" value="${esc(returnUrl)}">
+      <input type="hidden" name="cancel_return" value="${esc(window.location.origin + window.location.pathname)}">
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Payer avec PayPal</button>
+    </form>
+    <p class="hint">PayPal facture en dollars (≈ ${PRICE_FCFA} FCFA). Tu es débloqué automatiquement au retour sur l'app après paiement.</p>
+
+    <p class="field label" style="font-size:13px;font-weight:700;margin:22px 0 8px;">Payer par MyFeda</p>
+    <p class="section-desc" style="margin-bottom:8px;">Envoie <strong>${PRICE_FCFA} FCFA</strong> au compte MyFeda :<br>
+      Numéro : <strong>${esc(MYFEDA_NUMERO)}</strong><br>
+      Nom : <strong>${esc(MYFEDA_NOM)}</strong></p>
+    <div class="field"><label>Référence de la transaction MyFeda</label><input type="text" id="myfedaRef" placeholder="Ex. MF-XXXXXXX"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="confirmMyfedaPayment()">J'ai payé, débloquer</button>
+    <p class="hint">Ce déblocage MyFeda n'est pas vérifié automatiquement — merci de garder ta preuve de paiement.</p>`;
+}
+function renderSubscribeModal() {
+  renderSubscribeBody();
+  const body = document.getElementById('subModalBody');
+  if (session) body.insertAdjacentHTML('beforeend', `<p class="hint" style="margin-top:22px;">Connecté : ${esc(session.user.email || '')} — <a href="#" onclick="event.preventDefault();signOutUser()">se déconnecter</a></p>`);
+}
+function confirmMyfedaPayment() {
+  showToast("La vérification automatique des paiements arrive bientôt");
+}
+function toChips(arr) { return (arr||[]).filter(Boolean).map(t => ({ id: genId(), texte: String(t) })); }
+function withIds(arr) { return (arr||[]).map(o => Object.assign({ id: genId() }, o)); }
+async function runAiGenerate() {
+  if (!gateAi()) { closeAiModal(); return; }
+  const key = state.module; const schema = AI_SCHEMAS[key]; if (!schema) return;
+  const input = document.getElementById('aiInput').value.trim();
+  if (!input && !aiFiles.length) { showToast("Décris ta situation ou joins un fichier"); return; }
+  const btn = document.getElementById('aiGenBtn'); const inp = document.getElementById('aiInput');
+  btn.disabled = true; inp.disabled = true; btn.textContent = 'Génération…';
+  const userContent = [];
+  aiFiles.forEach(f => {
+    if (f.kind === 'image') userContent.push({ type: 'image', source: { type: 'base64', media_type: f.mediaType, data: f.data } });
+    else if (f.kind === 'pdf') userContent.push({ type: 'document', source: { type: 'base64', media_type: f.mediaType, data: f.data } });
+    else userContent.push({ type: 'text', text: 'Contenu du fichier « ' + f.name + ' » :\n' + f.data });
+  });
+  userContent.push({ type: 'text', text: input || "Génère le document à partir du ou des fichiers joints." });
+  const sys = schema.system + (aiFiles.length ? "\n\nL'utilisateur joint un ou plusieurs fichiers ou images. Sers-t'en comme modèle (structure, rubriques, ton, style) et/ou comme source d'informations pour remplir le document, sans copier mot pour mot. Réponds toujours uniquement avec le JSON demandé." : "");
+  try {
+    const data = await callAi(sys, [{ role: "user", content: userContent }]);
+    const raw = (data.content || []).map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    applyAiResult(key, parsed);
+    closeAiModal();
+    renderEditor();
+    showToast('Document généré ✨ — relis avant de l\'utiliser');
+  } catch (e) {
+    showToast("La génération a échoué. Réessaie dans un instant.");
+  }
+  btn.disabled = false; inp.disabled = false; btn.textContent = 'Générer';
+}
+function applyAiResult(key, data) {
+  const doc = state.doc;
+  if (key === 'cv') {
+    if (data.identite) Object.assign(doc.identite, data.identite);
+    if (data.profil) doc.profil = data.profil;
+    if (data.formations) doc.formations = withIds(data.formations);
+    if (data.experiences) doc.experiences = withIds(data.experiences);
+    if (data.competences) doc.competences = toChips(data.competences);
+    if (data.langues) doc.langues = withIds(data.langues);
+    if (data.interets) doc.interets = toChips(data.interets);
+  } else if (key === 'lettres') {
+    ['destinataire','objet','corps','formule','signature'].forEach(f => { if (data[f]) doc[f] = data[f]; });
+  } else if (key === 'notes') {
+    if (data.titre) doc.titre = data.titre;
+    if (data.contenu) doc.contenu = data.contenu;
+  } else if (key === 'cr') {
+    ['date','lieu','prochaineReunion'].forEach(f => { if (data[f]) doc[f] = data[f]; });
+    if (data.participants) doc.participants = toChips(data.participants);
+    if (data.ordreDuJour) doc.ordreDuJour = toChips(data.ordreDuJour);
+    if (data.points) doc.points = withIds(data.points);
+    if (data.actions) doc.actions = withIds(data.actions);
+  } else if (key === 'mem') {
+    if (data.titre) doc.titre = data.titre;
+    if (data.filiere) doc.filiere = data.filiere;
+    if (data.resume) doc.resume = data.resume;
+    if (data.motsCles) doc.motsCles = toChips(data.motsCles);
+    if (data.parties) doc.parties = withIds(data.parties);
+  }
+  debounceSave();
+}
+
+/* =========================================================
+   ASSISTANT IA — recherche et questions libres
+   (pas seulement CV / lettres / mémoires)
+   ========================================================= */
+const ASSISTANT_KEY = 'carnet_assistant_v1';
+let assistantMessages = [];
+function loadAssistantHistory() {
+  try { const raw = localStorage.getItem(ASSISTANT_KEY); if (raw) assistantMessages = JSON.parse(raw) || []; } catch (e) { assistantMessages = []; }
+}
+function saveAssistantHistory() {
+  try { localStorage.setItem(ASSISTANT_KEY, JSON.stringify(assistantMessages.slice(-40))); } catch (e) {}
+}
+function renderAssistantContent() {
+  document.getElementById('main').innerHTML = `
+    <div class="topbar">
+      <p class="page-title">Assistant IA</p>
+      <p class="page-sub">Recherches, questions de cours, méthodologie, idées… n'importe quel sujet, pas seulement tes documents.</p>
+    </div>
+    <div id="chatLog" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;max-width:640px;"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:60px;max-width:640px;">
+      <textarea id="chatInput" rows="2" placeholder="Écris ta question…" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--ink);resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+      <button class="btn btn-primary" id="chatSendBtn" onclick="sendChat()">Envoyer</button>
+    </div>`;
+  renderChatLog();
+}
+function renderChatLog() {
+  const log = document.getElementById('chatLog'); if (!log) return;
+  if (assistantMessages.length === 0) {
+    log.innerHTML = `<div class="empty"><p>Demande-moi une recherche, une explication de cours, un plan, une reformulation… ce que tu veux.</p></div>`;
+    return;
+  }
+  log.innerHTML = assistantMessages.map(m => `
+    <div style="align-self:${m.role==='user'?'flex-end':'flex-start'};max-width:85%;background:${m.role==='user'?'var(--accent)':'var(--card)'};color:${m.role==='user'?'#fff':'var(--ink)'};border:1px solid ${m.role==='user'?'transparent':'var(--border)'};border-radius:14px;padding:10px 14px;font-size:13.5px;white-space:pre-wrap;line-height:1.5;">${esc(m.content)}</div>
+  `).join('');
+  log.scrollTop = log.scrollHeight;
+}
+async function sendChat() {
+  const inp = document.getElementById('chatInput'); const text = inp.value.trim();
+  if (!text) return;
+  if (!gateAi()) return;
+  assistantMessages.push({ role: 'user', content: text }); inp.value = ''; renderChatLog(); saveAssistantHistory();
+  const btn = document.getElementById('chatSendBtn'); btn.disabled = true; btn.textContent = '…';
+  try {
+    const data = await callAi("Tu es l'assistant de recherche du Carnet, une app pour étudiant(e)s togolais(es). Tu aides sur n'importe quel sujet — cours, recherches, méthodologie, actualité, idées — pas seulement les CV, lettres ou mémoires. Réponds en français, de façon claire et concise.", assistantMessages.map(m => ({ role: m.role, content: m.content })));
+    const reply = (data.content || []).map(b => b.text || '').join('') || "Désolé, je n'ai pas pu répondre.";
+    assistantMessages.push({ role: 'assistant', content: reply });
+  } catch (e) {
+    if (e.message !== 'no_credits' && e.message !== 'auth') assistantMessages.push({ role: 'assistant', content: "Une erreur est survenue. Vérifie ta connexion et réessaie." });
+  }
+  renderChatLog(); saveAssistantHistory();
+  btn.disabled = false; btn.textContent = 'Envoyer';
+}
+
+/* =========================================================
+   CV MODULE — sections & template
+   ========================================================= */
+function renderCvSection(doc, key) {
+  if (key === 'identite') {
+    const i = doc.identite;
+    return `
+    <p class="section-title">Identité</p><p class="section-desc">Les informations en haut du CV.</p>
+    <div class="field-row">
+      <div class="field"><label>Prénom</label><input type="text" value="${esc(i.prenom)}" oninput="setItemField2('identite','prenom',this.value)"></div>
+      <div class="field"><label>Nom</label><input type="text" value="${esc(i.nom)}" oninput="setItemField2('identite','nom',this.value)"></div>
+    </div>
+    <div class="field"><label>Intitulé du poste recherché</label><input type="text" placeholder="Ex. Enseignant SVT" value="${esc(i.poste)}" oninput="setItemField2('identite','poste',this.value)"></div>
+    <div class="field-row">
+      <div class="field"><label>E-mail</label><input type="email" value="${esc(i.email)}" oninput="setItemField2('identite','email',this.value)"></div>
+      <div class="field"><label>Téléphone</label><input type="tel" value="${esc(i.telephone)}" oninput="setItemField2('identite','telephone',this.value)"></div>
+    </div>
+    <div class="field"><label>Ville</label><input type="text" placeholder="Ex. Atakpamé, Togo" value="${esc(i.ville)}" oninput="setItemField2('identite','ville',this.value)"></div>`;
+  }
+  if (key === 'profil') return `
+    <p class="section-title">Profil</p><p class="section-desc">Un court paragraphe qui présente ton parcours.</p>
+    <div class="field"><textarea rows="6" placeholder="Ex. Étudiant en Licence Professionnelle d'Enseignement (SVT) à l'ENS d'Atakpamé…" oninput="setField('profil', this.value)">${esc(doc.profil)}</textarea></div>`;
+  if (key === 'formation') return `
+    <p class="section-title">Formation</p><p class="section-desc">Du plus récent au plus ancien.</p>
+    ${doc.formations.map(f => `
+      <div class="repeat-card">
+        <div class="repeat-card-head"><span></span><button class="icon-btn" onclick="removeItem('formations','${f.id}')">${ICON.trash}</button></div>
+        <div class="field"><label>Diplôme / formation</label><input type="text" value="${esc(f.diplome)}" oninput="setItemField('formations','${f.id}','diplome',this.value)"></div>
+        <div class="field-row"><div class="field"><label>Établissement</label><input type="text" value="${esc(f.etablissement)}" oninput="setItemField('formations','${f.id}','etablissement',this.value)"></div>
+        <div class="field"><label>Ville</label><input type="text" value="${esc(f.lieu)}" oninput="setItemField('formations','${f.id}','lieu',this.value)"></div></div>
+        <div class="field-row"><div class="field"><label>Début</label><input type="text" placeholder="2023" value="${esc(f.debut)}" oninput="setItemField('formations','${f.id}','debut',this.value)"></div>
+        <div class="field"><label>Fin</label><input type="text" placeholder="2026 ou En cours" value="${esc(f.fin)}" oninput="setItemField('formations','${f.id}','fin',this.value)"></div></div>
+        <div class="field"><label>Détails (facultatif)</label><textarea rows="2" oninput="setItemField('formations','${f.id}','description',this.value)">${esc(f.description)}</textarea></div>
+      </div>`).join('')}
+    <button class="add-row-btn" onclick="addItem('formations', {diplome:'',etablissement:'',lieu:'',debut:'',fin:'',description:''})">${ICON.plus} Ajouter une formation</button>`;
+  if (key === 'experience') return `
+    <p class="section-title">Expérience</p><p class="section-desc">Stages, emplois, missions.</p>
+    ${doc.experiences.map(x => `
+      <div class="repeat-card">
+        <div class="repeat-card-head"><span></span><button class="icon-btn" onclick="removeItem('experiences','${x.id}')">${ICON.trash}</button></div>
+        <div class="field"><label>Poste</label><input type="text" value="${esc(x.poste)}" oninput="setItemField('experiences','${x.id}','poste',this.value)"></div>
+        <div class="field-row"><div class="field"><label>Structure</label><input type="text" value="${esc(x.structure)}" oninput="setItemField('experiences','${x.id}','structure',this.value)"></div>
+        <div class="field"><label>Ville</label><input type="text" value="${esc(x.lieu)}" oninput="setItemField('experiences','${x.id}','lieu',this.value)"></div></div>
+        <div class="field-row"><div class="field"><label>Début</label><input type="text" placeholder="Sept. 2025" value="${esc(x.debut)}" oninput="setItemField('experiences','${x.id}','debut',this.value)"></div>
+        <div class="field"><label>Fin</label><input type="text" placeholder="Déc. 2025" value="${esc(x.fin)}" oninput="setItemField('experiences','${x.id}','fin',this.value)"></div></div>
+        <div class="field"><label>Missions / réalisations</label><textarea rows="3" oninput="setItemField('experiences','${x.id}','description',this.value)">${esc(x.description)}</textarea></div>
+      </div>`).join('')}
+    <button class="add-row-btn" onclick="addItem('experiences', {poste:'',structure:'',lieu:'',debut:'',fin:'',description:''})">${ICON.plus} Ajouter une expérience</button>`;
+  if (key === 'competences') return `
+    <p class="section-title">Compétences</p><p class="section-desc">Ajoute-les une par une.</p>
+    <div class="chip-input-wrap">${doc.competences.map(c => `<span class="chip">${esc(c.texte)}<button onclick="removeChip('competences','${c.id}')">${ICON.x}</button></span>`).join('')}
+      <span class="chip-add"><input type="text" placeholder="Ajouter…" onkeydown="if(event.key==='Enter'){event.preventDefault(); addChip('competences', this.value, this);}"></span></div>`;
+  if (key === 'langues') return `
+    <p class="section-title">Langues</p>
+    ${doc.langues.map(l => `
+      <div class="repeat-card">
+        <div class="repeat-card-head"><span></span><button class="icon-btn" onclick="removeItem('langues','${l.id}')">${ICON.trash}</button></div>
+        <div class="field-row"><div class="field"><label>Langue</label><input type="text" value="${esc(l.langue)}" oninput="setItemField('langues','${l.id}','langue',this.value)"></div>
+        <div class="field"><label>Niveau</label><select onchange="setItemField('langues','${l.id}','niveau',this.value)">${NIV_LANGUE.map(n => `<option ${n===l.niveau?'selected':''}>${n}</option>`).join('')}</select></div></div>
+      </div>`).join('')}
+    <button class="add-row-btn" onclick="addItem('langues', {langue:'', niveau: 'Intermédiaire'})">${ICON.plus} Ajouter une langue</button>`;
+  if (key === 'interets') return `
+    <p class="section-title">Centres d'intérêt</p><p class="section-desc">Facultatif.</p>
+    <div class="chip-input-wrap">${doc.interets.map(c => `<span class="chip">${esc(c.texte)}<button onclick="removeChip('interets','${c.id}')">${ICON.x}</button></span>`).join('')}
+      <span class="chip-add"><input type="text" placeholder="Ajouter…" onkeydown="if(event.key==='Enter'){event.preventDefault(); addChip('interets', this.value, this);}"></span></div>`;
+  return '';
+}
+function setItemField2(obj, field, val) { state.doc[obj][field] = val; debounceSave(); syncPreview(); }
+
+function contactLine(i) {
+  const parts = [i.email, i.telephone, i.ville].filter(Boolean).map(esc);
+  return parts.length ? `<div class="cv-contact">${parts.map(p=>`<span>${p}</span>`).join('<span>·</span>')}</div>` : '';
+}
+function sectionFormation(cv) {
+  if (!cv.formations.length) return '';
+  return `<h2 class="cv-h2">Formation</h2>` + cv.formations.map(f => `
+    <div class="cv-item"><div class="cv-item-top"><span>${esc(f.diplome)}</span><span>${esc([f.debut,f.fin].filter(Boolean).join(' – '))}</span></div>
+    <div class="cv-item-sub">${esc([f.etablissement, f.lieu].filter(Boolean).join(', '))}</div>
+    ${f.description ? `<div class="cv-item-desc">${esc(f.description)}</div>` : ''}</div>`).join('');
+}
+function sectionExperience(cv) {
+  if (!cv.experiences.length) return '';
+  return `<h2 class="cv-h2">Expérience</h2>` + cv.experiences.map(x => `
+    <div class="cv-item"><div class="cv-item-top"><span>${esc(x.poste)}</span><span>${esc([x.debut,x.fin].filter(Boolean).join(' – '))}</span></div>
+    <div class="cv-item-sub">${esc([x.structure, x.lieu].filter(Boolean).join(', '))}</div>
+    ${x.description ? `<div class="cv-item-desc">${esc(x.description)}</div>` : ''}</div>`).join('');
+}
+function sectionCompetences(cv) {
+  if (!cv.competences.length) return '';
+  return `<h2 class="cv-h2">Compétences</h2><div class="cv-tags">${cv.competences.map(c => `<span class="cv-tag">${esc(c.texte)}</span>`).join('')}</div>`;
+}
+function sectionLangues(cv) {
+  if (!cv.langues.length) return '';
+  return `<h2 class="cv-h2">Langues</h2>` + cv.langues.map(l => `<div class="cv-item-desc" style="margin-bottom:3px;">${esc(l.langue)} — ${esc(l.niveau)}</div>`).join('');
+}
+function sectionInterets(cv) {
+  if (!cv.interets.length) return '';
+  return `<h2 class="cv-h2">Centres d'intérêt</h2><div class="cv-tags">${cv.interets.map(c => `<span class="cv-tag">${esc(c.texte)}</span>`).join('')}</div>`;
+}
+function buildCvHtml(cv) {
+  const t = cv.template || 'classique';
+  const i = cv.identite; const nom = [i.prenom, i.nom].filter(Boolean).join(' ') || 'Ton nom';
+  if (t === 'moderne') return `<div class="cv-doc tpl-moderne">
+    <div class="cv-side"><h1 class="cv-name">${esc(nom)}</h1>${i.poste?`<p class="cv-role">${esc(i.poste)}</p>`:''}${contactLine(i)}${sectionCompetences(cv)}${sectionLangues(cv)}${sectionInterets(cv)}</div>
+    <div class="cv-main">${cv.profil?`<div class="cv-profil">${esc(cv.profil)}</div>`:''}${sectionExperience(cv)}${sectionFormation(cv)}</div></div>`;
+  const cls = t === 'sobre' ? 'tpl-sobre' : 'tpl-classique';
+  const order = t === 'sobre' ? [sectionExperience,sectionFormation] : [sectionFormation,sectionExperience];
+  return `<div class="cv-doc ${cls}"><h1 class="cv-name">${esc(nom)}</h1>${i.poste?`<p class="cv-role">${esc(i.poste)}</p>`:''}${contactLine(i)}
+    ${cv.profil?`<div class="cv-profil">${esc(cv.profil)}</div>`:''}${order[0](cv)}${order[1](cv)}${sectionCompetences(cv)}${sectionLangues(cv)}${sectionInterets(cv)}</div>`;
+}
+
+/* =========================================================
+   LETTRES MODULE
+   ========================================================= */
+function lettrePlaceholder(type) {
+  const map = {
+    motivation: "Madame, Monsieur,\n\nActuellement [votre statut / formation], je vous adresse ma candidature pour le poste de […].\n\n[Présentez votre parcours, vos compétences et ce que vous pouvez apporter]\n\nJe reste à votre disposition pour un entretien et vous prie d'agréer…",
+    demission: "Madame, Monsieur,\n\nPar la présente, je vous informe de ma décision de démissionner de mon poste de […], à compter du […].\n\n[Motif si vous souhaitez le préciser]\n\nJe reste disponible pour assurer la passation dans les meilleures conditions.",
+    reclamation: "Madame, Monsieur,\n\nJe me permets de vous contacter au sujet de […].\n\n[Exposez les faits avec précision : dates, éléments concernés]\n\nJe vous remercie de l'attention que vous porterez à ma demande et reste dans l'attente d'un retour de votre part.",
+    libre: "Madame, Monsieur,\n\n[Votre texte]"
+  };
+  return map[type] || map.libre;
+}
+function renderLettreSection(doc, key) {
+  if (key === 'infos') return `
+    <p class="section-title">En-têtes</p><p class="section-desc">Expéditeur, destinataire, lieu, date et objet.</p>
+    <div class="field"><label>Ton nom (expéditeur)</label><input type="text" value="${esc(doc.expediteurNom)}" oninput="setField('expediteurNom', this.value)"></div>
+    <div class="field"><label>Ton adresse (facultatif)</label><textarea rows="2" oninput="setField('expediteurAdresse', this.value)">${esc(doc.expediteurAdresse)}</textarea></div>
+    <div class="field"><label>Destinataire</label><input type="text" placeholder="Ex. Madame la Directrice, Établissement…" value="${esc(doc.destinataire)}" oninput="setField('destinataire', this.value)"></div>
+    <div class="field"><label>Adresse du destinataire (facultatif)</label><textarea rows="2" oninput="setField('destinataireAdresse', this.value)">${esc(doc.destinataireAdresse)}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Lieu</label><input type="text" placeholder="Ex. Atakpamé" value="${esc(doc.lieu)}" oninput="setField('lieu', this.value)"></div>
+      <div class="field"><label>Date</label><input type="text" placeholder="Ex. 25 septembre 2026" value="${esc(doc.date)}" oninput="setField('date', this.value)"></div>
+    </div>
+    <div class="field"><label>Objet</label><input type="text" value="${esc(doc.objet)}" oninput="setField('objet', this.value)"></div>`;
+  if (key === 'contenu') return `
+    <p class="section-title">Contenu</p><p class="section-desc">Le corps de la lettre, la formule de politesse et la signature.</p>
+    <div class="field"><label>Corps de la lettre</label><textarea rows="12" placeholder="${esc(lettrePlaceholder(doc.template))}" oninput="setField('corps', this.value)">${esc(doc.corps)}</textarea></div>
+    <div class="field"><label>Formule de politesse</label><textarea rows="2" oninput="setField('formule', this.value)">${esc(doc.formule)}</textarea></div>
+    <div class="field"><label>Signature</label><input type="text" value="${esc(doc.signature)}" oninput="setField('signature', this.value)"></div>`;
+  return '';
+}
+function buildLettreHtml(doc) {
+  return `<div class="cv-doc tpl-lettre">
+    <div class="lettre-header">
+      <div class="lettre-exp">${esc(doc.expediteurNom)}${doc.expediteurAdresse?'\n'+esc(doc.expediteurAdresse):''}</div>
+      <div class="lettre-destdate">
+        <div class="lettre-dest">${esc(doc.destinataire)}${doc.destinataireAdresse?'\n'+esc(doc.destinataireAdresse):''}</div>
+        <div class="lettre-lieu-date">${[esc(doc.lieu), doc.date?'le '+esc(doc.date):''].filter(Boolean).join(', ')}</div>
+      </div>
+    </div>
+    ${doc.objet ? `<div class="lettre-objet"><strong>Objet : </strong>${esc(doc.objet)}</div>` : ''}
+    <div class="lettre-corps">${doc.corps ? esc(doc.corps) : '<span class="cv-item-sub">Le corps de ta lettre apparaîtra ici.</span>'}</div>
+    ${doc.formule ? `<div class="lettre-formule">${esc(doc.formule)}</div>` : ''}
+    ${doc.signature ? `<div class="lettre-signature">${esc(doc.signature)}</div>` : ''}
+  </div>`;
+}
+
+/* =========================================================
+   NOTES MODULE
+   ========================================================= */
+function renderNoteSection(doc, key) {
+  return `
+    <p class="section-title">Contenu</p><p class="section-desc">Écris librement — la sauvegarde est automatique.</p>
+    <div class="field"><textarea rows="18" placeholder="Ta note…" oninput="setField('contenu', this.value)">${esc(doc.contenu)}</textarea></div>`;
+}
+function buildNoteHtml(doc) {
+  return `<div class="cv-doc">
+    <h1 class="cv-name" style="font-size:16px;">${esc(doc.titre || 'Note')}</h1>
+    <div class="cv-contact"><span>${fmtDate(doc.updatedAt)}</span></div>
+    <div class="cv-item-desc" style="font-size:10.5px;">${doc.contenu ? esc(doc.contenu) : '<span class="cv-item-sub">Ta note apparaîtra ici.</span>'}</div>
+  </div>`;
+}
+
+/* =========================================================
+   COMPTES-RENDUS MODULE
+   ========================================================= */
+function renderCrSection(doc, key) {
+  if (key === 'infos') return `
+    <p class="section-title">Informations</p>
+    <div class="field-row">
+      <div class="field"><label>Date</label><input type="text" placeholder="Ex. 25 septembre 2026" value="${esc(doc.date)}" oninput="setField('date', this.value)"></div>
+      <div class="field"><label>Lieu</label><input type="text" value="${esc(doc.lieu)}" oninput="setField('lieu', this.value)"></div>
+    </div>
+    <div class="field"><label>Participants</label>
+      <div class="chip-input-wrap">${doc.participants.map(c => `<span class="chip">${esc(c.texte)}<button onclick="removeChip('participants','${c.id}')">${ICON.x}</button></span>`).join('')}
+        <span class="chip-add"><input type="text" placeholder="Ajouter un participant…" onkeydown="if(event.key==='Enter'){event.preventDefault(); addChip('participants', this.value, this);}"></span></div>
+    </div>
+    <div class="field"><label>Ordre du jour</label>
+      <div class="chip-input-wrap">${doc.ordreDuJour.map(c => `<span class="chip">${esc(c.texte)}<button onclick="removeChip('ordreDuJour','${c.id}')">${ICON.x}</button></span>`).join('')}
+        <span class="chip-add"><input type="text" placeholder="Ajouter un point…" onkeydown="if(event.key==='Enter'){event.preventDefault(); addChip('ordreDuJour', this.value, this);}"></span></div>
+    </div>`;
+  if (key === 'points') return `
+    <p class="section-title">Points abordés</p><p class="section-desc">Un point par sujet discuté.</p>
+    ${doc.points.map(p => `
+      <div class="repeat-card">
+        <div class="repeat-card-head"><span></span><button class="icon-btn" onclick="removeItem('points','${p.id}')">${ICON.trash}</button></div>
+        <div class="field"><label>Sujet</label><input type="text" value="${esc(p.sujet)}" oninput="setItemField('points','${p.id}','sujet',this.value)"></div>
+        <div class="field"><label>Notes / décisions</label><textarea rows="3" oninput="setItemField('points','${p.id}','notes',this.value)">${esc(p.notes)}</textarea></div>
+      </div>`).join('')}
+    <button class="add-row-btn" onclick="addItem('points', {sujet:'',notes:''})">${ICON.plus} Ajouter un point</button>`;
+  if (key === 'actions') return `
+    <p class="section-title">Actions à suivre</p>
+    ${doc.actions.map(a => `
+      <div class="repeat-card">
+        <div class="repeat-card-head"><span></span><button class="icon-btn" onclick="removeItem('actions','${a.id}')">${ICON.trash}</button></div>
+        <div class="field"><label>Tâche</label><input type="text" value="${esc(a.tache)}" oninput="setItemField('actions','${a.id}','tache',this.value)"></div>
+        <div class="field-row"><div class="field"><label>Responsable</label><input type="text" value="${esc(a.responsable)}" oninput="setItemField('actions','${a.id}','responsable',this.value)"></div>
+        <div class="field"><label>Échéance</label><input type="text" placeholder="Ex. 3 octobre" value="${esc(a.echeance)}" oninput="setItemField('actions','${a.id}','echeance',this.value)"></div></div>
+      </div>`).join('')}
+    <button class="add-row-btn" onclick="addItem('actions', {tache:'',responsable:'',echeance:''})">${ICON.plus} Ajouter une action</button>
+    <div class="field" style="margin-top:18px;"><label>Prochaine réunion (facultatif)</label><input type="text" value="${esc(doc.prochaineReunion)}" oninput="setField('prochaineReunion', this.value)"></div>`;
+  return '';
+}
+function buildCrHtml(doc) {
+  return `<div class="cv-doc">
+    <h1 class="cv-name">${esc(doc.titre || 'Compte-rendu')}</h1>
+    <div class="cv-contact"><span>${[doc.date, doc.lieu].filter(Boolean).map(esc).join(' · ')}</span></div>
+    ${doc.participants.length ? `<h2 class="cv-h2">Participants</h2><div class="cv-tags">${doc.participants.map(p=>`<span class="cv-tag">${esc(p.texte)}</span>`).join('')}</div>` : ''}
+    ${doc.ordreDuJour.length ? `<h2 class="cv-h2">Ordre du jour</h2><ol>${doc.ordreDuJour.map(o=>`<li>${esc(o.texte)}</li>`).join('')}</ol>` : ''}
+    ${doc.points.length ? `<h2 class="cv-h2">Points abordés</h2>` + doc.points.map(p => `<div class="cv-item"><div class="cv-item-top"><span>${esc(p.sujet)}</span></div>${p.notes?`<div class="cv-item-desc">${esc(p.notes)}</div>`:''}</div>`).join('') : ''}
+    ${doc.actions.length ? `<h2 class="cv-h2">Actions à suivre</h2>` + doc.actions.map(a => `<div class="cv-item"><div class="cv-item-top"><span>${esc(a.tache)}</span><span>${esc(a.echeance)}</span></div>${a.responsable?`<div class="cv-item-sub">${esc(a.responsable)}</div>`:''}</div>`).join('') : ''}
+    ${doc.prochaineReunion ? `<h2 class="cv-h2">Prochaine réunion</h2><div class="cv-item-desc">${esc(doc.prochaineReunion)}</div>` : ''}
+  </div>`;
+}
+
+/* =========================================================
+   MÉMOIRES MODULE
+   ========================================================= */
+function renderMemSection(doc, key) {
+  if (key === 'garde') return `
+    <p class="section-title">Page de garde</p>
+    <div class="field"><label>Établissement</label><input type="text" placeholder="Ex. École Normale Supérieure d'Atakpamé" value="${esc(doc.etablissement)}" oninput="setField('etablissement', this.value)"></div>
+    <div class="field"><label>Filière / mention</label><input type="text" placeholder="Ex. Licence Professionnelle d'Enseignement — SVT" value="${esc(doc.filiere)}" oninput="setField('filiere', this.value)"></div>
+    <div class="field"><label>Auteur</label><input type="text" value="${esc(doc.auteur)}" oninput="setField('auteur', this.value)"></div>
+    <div class="field"><label>Encadreur / directeur de mémoire</label><input type="text" value="${esc(doc.encadreur)}" oninput="setField('encadreur', this.value)"></div>
+    <div class="field"><label>Année académique</label><input type="text" placeholder="Ex. 2025 – 2026" value="${esc(doc.anneeAcademique)}" oninput="setField('anneeAcademique', this.value)"></div>`;
+  if (key === 'avant') return `
+    <p class="section-title">Avant-propos</p><p class="section-desc">Facultatif — laisse vide ce que tu n'utilises pas.</p>
+    <div class="field"><label>Dédicace</label><textarea rows="3" oninput="setField('dedicace', this.value)">${esc(doc.dedicace)}</textarea></div>
+    <div class="field"><label>Remerciements</label><textarea rows="4" oninput="setField('remerciements', this.value)">${esc(doc.remerciements)}</textarea></div>
+    <div class="field"><label>Résumé</label><textarea rows="5" oninput="setField('resume', this.value)">${esc(doc.resume)}</textarea></div>
+    <div class="field"><label>Mots-clés</label>
+      <div class="chip-input-wrap">${doc.motsCles.map(c => `<span class="chip">${esc(c.texte)}<button onclick="removeChip('motsCles','${c.id}')">${ICON.x}</button></span>`).join('')}
+        <span class="chip-add"><input type="text" placeholder="Ajouter…" onkeydown="if(event.key==='Enter'){event.preventDefault(); addChip('motsCles', this.value, this);}"></span></div>
+    </div>`;
+  if (key === 'parties') return `
+    <p class="section-title">Chapitres</p><p class="section-desc">Ajoute tes parties dans l'ordre ; utilise les flèches pour réorganiser.</p>
+    ${doc.parties.map((p,idx) => `
+      <div class="repeat-card">
+        <div class="repeat-card-head">
+          <span style="font-size:11px;color:var(--ink-soft);font-weight:700;">Chapitre ${idx+1}</span>
+          <div class="mini-actions">
+            <button class="icon-btn" title="Monter" onclick="moveItem('parties','${p.id}',-1)">${ICON.up}</button>
+            <button class="icon-btn" title="Descendre" onclick="moveItem('parties','${p.id}',1)">${ICON.down}</button>
+            <button class="icon-btn" title="Supprimer" onclick="removeItem('parties','${p.id}')">${ICON.trash}</button>
+          </div>
+        </div>
+        <div class="field"><label>Titre du chapitre</label><input type="text" placeholder="Ex. Cadre théorique" value="${esc(p.titre)}" oninput="setItemField('parties','${p.id}','titre',this.value)"></div>
+        <div class="field"><label>Contenu</label><textarea rows="8" oninput="setItemField('parties','${p.id}','contenu',this.value)">${esc(p.contenu)}</textarea></div>
+      </div>`).join('')}
+    <button class="add-row-btn" onclick="addItem('parties', {titre:'',contenu:''})">${ICON.plus} Ajouter un chapitre</button>`;
+  return '';
+}
+function buildMemHtml(doc) {
+  const parts = doc.parties || [];
+  return `<div class="cv-doc">
+    <div class="mem-cover">
+      ${doc.etablissement ? `<div class="mem-etab">${esc(doc.etablissement)}</div>` : ''}
+      ${doc.filiere ? `<div class="mem-filiere">${esc(doc.filiere)}</div>` : ''}
+      <div class="mem-kind">MÉMOIRE</div>
+      <h1 class="mem-title">${esc(doc.titre || 'Titre du mémoire')}</h1>
+      ${doc.auteur ? `<div class="mem-auteur">Présenté par ${esc(doc.auteur)}</div>` : ''}
+      ${doc.encadreur ? `<div class="mem-encadreur">Sous la direction de ${esc(doc.encadreur)}</div>` : ''}
+      ${doc.anneeAcademique ? `<div class="mem-annee">Année académique ${esc(doc.anneeAcademique)}</div>` : ''}
+    </div>
+    ${doc.dedicace ? `<div class="mem-block"><h2 class="cv-h2">Dédicace</h2><div class="cv-item-desc">${esc(doc.dedicace)}</div></div>` : ''}
+    ${doc.remerciements ? `<div class="mem-block"><h2 class="cv-h2">Remerciements</h2><div class="cv-item-desc">${esc(doc.remerciements)}</div></div>` : ''}
+    ${doc.resume ? `<div class="mem-block"><h2 class="cv-h2">Résumé</h2><div class="cv-item-desc">${esc(doc.resume)}</div>${doc.motsCles.length?`<div class="cv-tags" style="margin-top:8px;">${doc.motsCles.map(m=>`<span class="cv-tag">${esc(m.texte)}</span>`).join('')}</div>`:''}</div>` : ''}
+    ${parts.length ? `<div class="mem-block"><h2 class="cv-h2">Table des matières</h2><ol>${parts.map((p,i)=>`<li>${esc(p.titre || 'Chapitre '+(i+1))}</li>`).join('')}</ol></div>` : ''}
+    ${parts.map((p,i) => `<div class="mem-part"><h2 class="cv-h2">${i+1}. ${esc(p.titre || 'Chapitre '+(i+1))}</h2><div class="cv-item-desc">${p.contenu ? esc(p.contenu) : '<span class="cv-item-sub">Contenu à venir.</span>'}</div></div>`).join('')}
+  </div>`;
+}
+
+/* =========================================================
+   EXPORT (print / standalone HTML / backup)
+   ========================================================= */
+function printDoc() {
+  document.getElementById('printArea').innerHTML = MODULES[state.module].buildPreview(state.doc);
+  setTimeout(() => window.print(), 60);
+}
+function standaloneDoc() {
+  const styleTag = document.querySelector('style').outerHTML;
+  const fontsLink = Array.from(document.querySelectorAll('link[rel=stylesheet], link[rel=preconnect]')).map(l => l.outerHTML).join('\n');
+  const titre = state.doc.titre || 'Document';
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${esc(titre)}</title>
+${fontsLink}${styleTag}
+<style>body{background:#fff;padding:24px;} .cv-doc{max-width:720px;margin:0 auto;box-shadow:0 0 0 1px #DAD3C1;}</style>
+</head><body>${MODULES[state.module].buildPreview(state.doc)}</body></html>`;
+}
+function downloadStandalone() {
+  const html = standaloneDoc();
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const name = (state.doc.titre || 'document').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'document';
+  a.href = url; a.download = `${name}.html`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  showToast('Fichier téléchargé');
+}
+
+function openBackupMenu() {
+  const total = MODULE_KEYS.reduce((n,k) => n + (store[k]||[]).length, 0);
+  if (!confirm(`Exporter tous tes documents (${total}) dans un fichier de sauvegarde ?\n\nClique sur Annuler si tu veux plutôt importer une sauvegarde existante.`)) {
+    importBackupPrompt();
+    return;
+  }
+  exportBackup();
+}
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'carnet-sauvegarde.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  showToast('Sauvegarde téléchargée');
+}
+function importBackupPrompt() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'application/json';
+  input.onchange = (ev) => {
+    const file = ev.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(reader.result);
+        let added = 0;
+        MODULE_KEYS.forEach(k => {
+          if (!Array.isArray(imported[k])) return;
+          const existingIds = new Set((store[k]||[]).map(d => d.id));
+          imported[k].forEach(d => { if (d && d.id && !existingIds.has(d.id)) { store[k].push(d); added++; } });
+        });
+        persistStore(); render();
+        showToast(added + ' document(s) importé(s)');
+      } catch (e) { showToast('Fichier de sauvegarde invalide'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* ---------------- icons ---------------- */
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-.7 13.3A2 2 0 0 1 15.3 21H8.7a2 2 0 0 1-2-1.7L6 6"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="1.5"/><path d="M5 15V4.5A1.5 1.5 0 0 1 6.5 3H15"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 19h16"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>',
+  cv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>',
+  note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M15 3v6h6M8 13h8M8 17h5"/></svg>',
+  clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  backup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>'
+};
+
+/* ---------------- init ---------------- */
+initTheme();
+loadStore();
+loadAssistantHistory();
+handlePaypalReturn();
+render();
+initAuth();
+</script>
+</body>
+</html>
